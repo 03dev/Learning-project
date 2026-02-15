@@ -14,7 +14,6 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
 
     try {
         const decode = jwt.verify(token, JWT_SECRET) as { id: number };
-        console.log(typeof decode.id);
 
         // attach user info to request
         (req as any).user = { id: decode.id };
