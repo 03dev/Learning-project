@@ -3,6 +3,9 @@ import { authMiddleware } from "../middleware/auth.middleware";
 import { noteSchema, updateNoteSchema } from "../validators/note.schema";
 import prisma from "../db/prisma";
 import { error } from "node:console";
+// import { Prisma } from "../generated/prisma/browser";
+import { Prisma } from "@prisma/client";
+
 
 const router = Router();
 
@@ -40,6 +43,28 @@ router.get("/notes", authMiddleware, async (req: Request, res: Response) => {
 
   let page = Number(req.query.page);
   let limit = Number(req.query.limit);
+  let search = typeof req.query.search === "string"
+  ? req.query.search.trim()
+  : "";
+
+  let whereCondition: Prisma.NoteWhereInput = {
+  userId
+};
+
+  if (search) {
+    whereCondition.OR = [
+        {
+            title: {
+                contains: search.toLowerCase(),
+            }
+        },
+        {
+            content: {
+                contains: search.toLowerCase()
+            }
+        }
+    ]
+  }
 
   if (isNaN(page)) page = 1;
   if (isNaN(limit)) limit = 10;
@@ -56,14 +81,10 @@ router.get("/notes", authMiddleware, async (req: Request, res: Response) => {
 
   const [totalNotes, notes] = await Promise.all([
     prisma.note.count({
-        where: {
-            userId: userId
-        }
+        where: whereCondition
     }),
     prisma.note.findMany({
-        where: {
-            userId: userId
-        },
+        where: whereCondition,
         skip,
         take: limit,
         orderBy: {
