@@ -5,6 +5,7 @@ import prisma from "../db/prisma";
 import { error } from "node:console";
 // import { Prisma } from "../generated/prisma/browser";
 import { Prisma } from "@prisma/client";
+import { noteQuerySchema } from "../validators/noteQuerySchema";
 
 
 const router = Router();
@@ -41,11 +42,20 @@ router.post("/notes", authMiddleware, async (req: Request, res: Response) => {
 router.get("/notes", authMiddleware, async (req: Request, res: Response) => {
   const userId = (req as any).user.id;
 
-  let page = Number(req.query.page);
-  let limit = Number(req.query.limit);
-  let search = typeof req.query.search === "string"
-  ? req.query.search.trim()
-  : "";
+  const parsedQuery = noteQuerySchema.safeParse(req.query);
+
+  if(!parsedQuery.success) {
+    return res.status(400).json({
+      message: "Invalid query parameters",
+      error: parsedQuery.error.format()
+    });
+  }
+
+  let { page, limit, search, sortBy, sortOrder} = parsedQuery.data;
+      
+  let orderBy: Prisma.NoteOrderByWithRelationInput = {
+    [sortBy]: sortOrder,
+  };
 
   let whereCondition: Prisma.NoteWhereInput = {
   userId
@@ -55,12 +65,12 @@ router.get("/notes", authMiddleware, async (req: Request, res: Response) => {
     whereCondition.OR = [
         {
             title: {
-                contains: search.toLowerCase(),
+                contains: search,
             }
         },
         {
             content: {
-                contains: search.toLowerCase()
+                contains: search,
             }
         }
     ]
@@ -87,9 +97,7 @@ router.get("/notes", authMiddleware, async (req: Request, res: Response) => {
         where: whereCondition,
         skip,
         take: limit,
-        orderBy: {
-            createdAt: "desc"
-        }
+        orderBy,
     })
   ]);
 
