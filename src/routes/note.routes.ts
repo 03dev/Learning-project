@@ -4,6 +4,7 @@ import { noteSchema, updateNoteSchema } from "../validators/note.schema";
 import prisma from "../db/prisma";
 import { Prisma } from "@prisma/client";
 import { noteQuerySchema } from "../validators/noteQuerySchema";
+import { getUserNotesController } from "../controllers/note.controller";
 
 const router = Router();
 
@@ -36,80 +37,7 @@ router.post("/notes", authMiddleware, async (req: Request, res: Response) => {
   });
 });
 
-router.get("/notes", authMiddleware, async (req: Request, res: Response) => {
-  const userId = (req as any).user.id;
-
-  const parsedQuery = noteQuerySchema.safeParse(req.query);
-
-  if (!parsedQuery.success) {
-    return res.status(400).json({
-      message: "Invalid query parameters",
-      error: parsedQuery.error.format(),
-    });
-  }
-
-  let { page, limit, search, sortBy, sortOrder } = parsedQuery.data;
-
-  let orderBy: Prisma.NoteOrderByWithRelationInput = {
-    [sortBy]: sortOrder,
-  };
-
-  let whereCondition: Prisma.NoteWhereInput = {
-    userId,
-  };
-
-  if (search) {
-    whereCondition.OR = [
-      {
-        title: {
-          contains: search,
-        },
-      },
-      {
-        content: {
-          contains: search,
-        },
-      },
-    ];
-  }
-
-  if (isNaN(page)) page = 1;
-  if (isNaN(limit)) limit = 10;
-
-  page = Math.floor(page);
-  limit = Math.floor(limit);
-
-  if (page < 1) page = 1;
-  if (limit < 1) limit = 10;
-
-  if (limit > 50) limit = 50;
-
-  const skip = (page - 1) * limit;
-
-  const [totalNotes, notes] = await Promise.all([
-    prisma.note.count({
-      where: whereCondition,
-    }),
-    prisma.note.findMany({
-      where: whereCondition,
-      skip,
-      take: limit,
-      orderBy,
-    }),
-  ]);
-
-  const totalPages = Math.ceil(totalNotes / limit);
-
-  return res.status(200).json({
-    data: notes,
-    pagination: {
-      totalNotes,
-      totalPages,
-      currentPage: page,
-      limit,
-    },
-  });
-});
+router.get("/notes", authMiddleware, getUserNotesController);
 
 router.delete(
   "/delete/:id",

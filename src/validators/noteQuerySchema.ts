@@ -6,3 +6,5 @@ export const noteQuerySchema = z.object({
     sortBy: z.enum(["title", "createdAt"]).default("createdAt"),
     sortOrder: z.enum(["asc", "desc"]).default("desc")
 });
+
+export type NoteQueryParams = z.infer<typeof noteQuerySchema>;
