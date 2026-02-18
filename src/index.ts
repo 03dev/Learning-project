@@ -1,14 +1,14 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express, { Request, Response } from 'express';
 import authRoutes from './routes/auth.routes'
 import noteRoutes from './routes/note.routes';
 import cookieParser from 'cookie-parser';
-import dotenv from 'dotenv';
 import { errorHandler } from './middleware/error.middleware';
-
 
 const app = express();
 
-dotenv.config();
 app.use(express.json());
 app.use(cookieParser());
 

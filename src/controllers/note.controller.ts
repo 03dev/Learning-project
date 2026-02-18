@@ -6,8 +6,11 @@ import { noteSchema } from "../validators/note.schema";
 import { BadRequestError } from "../errors/BadRequestError";
 import { th } from "zod/v4/locales";
 
-export const createNoteController = async (req: Request, res: Response) => {
-  const userId = (req as AuthRequest).user.id;
+export const createNoteController = async (req: AuthRequest, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    throw new BadRequestError("User not authenticated");
+  }
   const result = noteSchema.safeParse(req.body);
 
   if (!result.success) {
@@ -23,7 +26,10 @@ export const createNoteController = async (req: Request, res: Response) => {
 }
 
 export const getUserNotesController = async (req: Request, res: Response) => {
-  const userId = (req as AuthRequest).user.id;
+  const userId = (req as AuthRequest).user?.id;
+  if (!userId) {
+    throw new BadRequestError("User not authenticated");
+  }
   const parsedQuery = noteQuerySchema.safeParse(req.query);
 
   if (!parsedQuery.success) {
@@ -35,7 +41,10 @@ export const getUserNotesController = async (req: Request, res: Response) => {
 };
 
 export const deleteNoteController = async (req: Request, res: Response) => {
-  const userId = (req as AuthRequest).user.id;
+  const userId = (req as AuthRequest).user?.id;
+  if (!userId) {
+    throw new BadRequestError("User not authenticated");
+  }
   const noteId = Number(req.params.id);
 
   if (!Number.isInteger(noteId) || noteId <= 0) {
@@ -50,7 +59,10 @@ export const deleteNoteController = async (req: Request, res: Response) => {
 }
 
 export const updateNoteController = async (req: Request, res: Response) => {
-  const userId = (req as AuthRequest).user.id;
+  const userId = (req as AuthRequest).user?.id;
+  if (!userId) {
+    throw new BadRequestError("User not authenticated");
+  }
   const noteId = Number(req.params.id);
 
   if (!Number.isInteger(noteId) || noteId <= 0) {
