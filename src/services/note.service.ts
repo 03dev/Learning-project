@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import prisma from "../db/prisma";
 import { NoteQueryParams } from "../validators/noteQuerySchema";
+import { NotFoundError } from "../errors/NotFoundError";
 
 export const createNote = async (userId: number, data: { title: string; content: string }) => {
     const { title, content } = data;
@@ -69,12 +70,18 @@ export const getUserNotes = async (userId: number, queryData: NoteQueryParams) =
 }
 
 export const deleteNote = async (userId: number, noteId: number) => {
-    return prisma.note.deleteMany({
+    const result = await prisma.note.deleteMany({
         where: {
             id: noteId,
             userId,
         },
     });
+
+    if (result.count === 0) {
+        throw new NotFoundError("Note not found or unauthorized");
+    }
+
+    return result;
 }
 
 export const updateNote = async (userId: number, noteId: number, data: { title: string; content: string }) => {
@@ -88,7 +95,7 @@ export const updateNote = async (userId: number, noteId: number, data: { title: 
     });
 
     if (!note) {
-        throw new Error("Note not found or unauthorized");
+        throw new NotFoundError("Note not found or unauthorized");
     }
 
     return prisma.note.update({

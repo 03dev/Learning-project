@@ -1,15 +1,16 @@
 import { Router } from "express";
 import { authMiddleware } from "../middleware/auth.middleware";
 import { createNoteController, deleteNoteController, getUserNotesController, updateNoteController } from "../controllers/note.controller";
+import { asyncHander } from "../utils/asyncHander";
 
 const router = Router();
 
-router.post("/notes", authMiddleware, createNoteController);
+router.post("/notes", authMiddleware, asyncHander(createNoteController));
 
-router.get("/notes", authMiddleware, getUserNotesController);
+router.get("/notes", authMiddleware, asyncHander(getUserNotesController));
 
-router.delete("/delete/:id", authMiddleware, deleteNoteController);
+router.delete("/delete/:id", authMiddleware, asyncHander(deleteNoteController));
 
-router.put("/update/:id", authMiddleware, updateNoteController);
+router.put("/update/:id", authMiddleware, asyncHander(updateNoteController));
 
 export default router;

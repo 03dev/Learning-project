@@ -3,6 +3,7 @@ import authRoutes from './routes/auth.routes'
 import noteRoutes from './routes/note.routes';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
+import { errorHandler } from './middleware/error.middleware';
 
 
 const app = express();
@@ -17,6 +18,7 @@ app.get('/', (req: Request, res: Response) => {
 
 app.use('/auth', authRoutes);
 app.use('/api', noteRoutes);
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
 
