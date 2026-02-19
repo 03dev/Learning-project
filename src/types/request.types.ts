@@ -5,3 +5,9 @@ export interface AuthRequest extends Request {
     id: number;
   };
 }
+
+export interface AuthenticatedRequest extends Request {
+  user: {
+    id: number;
+  };
+}
