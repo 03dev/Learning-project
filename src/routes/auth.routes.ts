@@ -11,7 +11,7 @@ const JWT_SECRET = process.env.JWT_SECRET as string;
 
 
 // Signup route
-router.post('/signup', asyncHander(signUpController));
+router.post('/signup',validateRequest(credentialsSchema), asyncHander(signUpController));
 
 // login route
 router .post('/login', validateRequest(credentialsSchema), asyncHander(loginController));

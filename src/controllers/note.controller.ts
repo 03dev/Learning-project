@@ -1,22 +1,17 @@
 import { Request, Response } from "express";
 import { createNote, deleteNote, getUserNotes, updateNote } from "../services/note.service";
 import { noteQuerySchema } from "../validators/noteQuerySchema";
-import { AuthRequest } from "../types/request.types";
-import { noteSchema } from "../validators/note.schema";
+import { AuthRequest, AuthenticatedRequest } from "../types/request.types";
+import { CreateNoteInput, UpdateNoteInput } from "../validators/note.schema";
 import { BadRequestError } from "../errors/BadRequestError";
 
-export const createNoteController = async (req: AuthRequest, res: Response) => {
-  const userId = req.user?.id;
+export const createNoteController = async (req: AuthenticatedRequest & Request<{ id: string }, {}, CreateNoteInput>, res: Response) => {
+  const userId = req.user.id;
   if (!userId) {
     throw new BadRequestError("User not authenticated");
   }
-  const result = noteSchema.safeParse(req.body);
 
-  if (!result.success) {
-    throw new BadRequestError("Validation error: " + JSON.stringify(result.error.issues));
-  }
-
-  const note = await createNote(userId, result.data);
+  const note = await createNote(userId, req.body);
 
   return res.status(201).json({
     data: note,
@@ -24,8 +19,8 @@ export const createNoteController = async (req: AuthRequest, res: Response) => {
   });
 }
 
-export const getUserNotesController = async (req: Request, res: Response) => {
-  const userId = (req as AuthRequest).user?.id;
+export const getUserNotesController = async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user.id;
   if (!userId) {
     throw new BadRequestError("User not authenticated");
   }
@@ -39,8 +34,8 @@ export const getUserNotesController = async (req: Request, res: Response) => {
   return res.status(200).json(result);
 };
 
-export const deleteNoteController = async (req: Request, res: Response) => {
-  const userId = (req as AuthRequest).user?.id;
+export const deleteNoteController = async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user.id;
   if (!userId) {
     throw new BadRequestError("User not authenticated");
   }
@@ -57,8 +52,8 @@ export const deleteNoteController = async (req: Request, res: Response) => {
   });
 }
 
-export const updateNoteController = async (req: Request, res: Response) => {
-  const userId = (req as AuthRequest).user?.id;
+export const updateNoteController = async (req: AuthenticatedRequest & Request<{ id: string }, {}, UpdateNoteInput>, res: Response) => {
+  const userId = req.user.id;
   if (!userId) {
     throw new BadRequestError("User not authenticated");
   }
@@ -68,13 +63,7 @@ export const updateNoteController = async (req: Request, res: Response) => {
     throw new BadRequestError("Invalid note ID");
   }
 
-  const result = noteSchema.safeParse(req.body);
-
-  if (!result.success) {
-    throw new BadRequestError("Validation error: " + JSON.stringify(result.error.issues));
-  }
-
-  const note = await updateNote(userId, noteId, result.data);
+  const note = await updateNote(userId, noteId, req.body);
 
   return res.status(200).json({
     data: note,
