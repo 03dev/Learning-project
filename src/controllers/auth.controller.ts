@@ -21,13 +21,8 @@ export const signUpController = async (req: AuthRequest, res: Response) => {
 };
 
 export const loginController = async (req: Request, res: Response) => {
-    const result = credentialsSchema.safeParse(req.body);
-
-    if(!result.success) {
-        throw new BadRequestError("Invalid input: ", result.error.flatten().fieldErrors);
-    }
-
-    const token = await login(result.data);
+    console.log("Controller hit");
+    const token = await login(req.body);
     
     res.cookie('token', token, {
         httpOnly: true,

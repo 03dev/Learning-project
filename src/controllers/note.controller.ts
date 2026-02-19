@@ -4,7 +4,6 @@ import { noteQuerySchema } from "../validators/noteQuerySchema";
 import { AuthRequest } from "../types/request.types";
 import { noteSchema } from "../validators/note.schema";
 import { BadRequestError } from "../errors/BadRequestError";
-import { th } from "zod/v4/locales";
 
 export const createNoteController = async (req: AuthRequest, res: Response) => {
   const userId = req.user?.id;
