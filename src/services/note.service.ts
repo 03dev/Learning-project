@@ -108,3 +108,18 @@ export const updateNote = async (userId: number, noteId: number, data: { title: 
         },
     });
 }
+
+export const getNoteById = async (userId: number, noteId: number) => {
+    const note = await prisma.note.findFirst({
+        where: {
+            id: noteId,
+            userId,
+        }
+    });
+
+    if(!note) {
+        throw new NotFoundError("Note not found or unauthorized");
+    }
+
+    return note;
+}

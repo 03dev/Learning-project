@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authMiddleware } from "../middleware/auth.middleware";
-import { createNoteController, deleteNoteController, getUserNotesController, updateNoteController } from "../controllers/note.controller";
+import { createNoteController, deleteNoteController, getNoteByIdController, getUserNotesController, updateNoteController } from "../controllers/note.controller";
 import { asyncHander } from "../utils/asyncHander";
 import { validateRequest } from "../middleware/validate.middleware";
 import { noteSchema, updateNoteSchema } from "../validators/note.schema";
@@ -14,5 +14,7 @@ router.get("/notes", authMiddleware, asyncHander(getUserNotesController));
 router.delete("/delete/:id", authMiddleware, asyncHander(deleteNoteController));
 
 router.put("/update/:id", authMiddleware, validateRequest(updateNoteSchema), asyncHander(updateNoteController));
+
+router.get("/notes/:id", authMiddleware, asyncHander(getNoteByIdController));
 
 export default router;
