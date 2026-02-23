@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { createNote, deleteNote, getNoteById, getUserNotes, updateNote } from "../services/note.service";
+import { createNote, deleteNote, getNoteById, getUserNotes, softDeleteNote, updateNote } from "../services/note.service";
 import { noteQuerySchema } from "../validators/noteQuerySchema";
 import { AuthRequest, AuthenticatedRequest } from "../types/request.types";
 import { CreateNoteInput, UpdateNoteInput } from "../validators/note.schema";
@@ -85,5 +85,21 @@ export const getNoteByIdController = async (req: AuthenticatedRequest & Request<
   return res.status(200).json({
     data: note,
     message: "Note retrieved successfully",
+  });
+};
+
+export const softDeleteNoteController = async (req: AuthenticatedRequest & Request<{ id: string }>, res: Response) => {
+  const userId = req.user.id;
+
+  const noteId = Number.parseInt(req.params.id, 10);
+
+  if (!Number.isInteger(noteId) || noteId <= 0) {
+    throw new BadRequestError("Invalid note ID");
+  }
+
+  await softDeleteNote(userId, noteId);
+
+  return res.status(200).json({
+    message: "Note deleted successfully",
   });
 };

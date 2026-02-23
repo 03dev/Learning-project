@@ -25,6 +25,7 @@ export const getUserNotes = async (userId: number, queryData: NoteQueryParams) =
 
     let whereCondition: Prisma.NoteWhereInput = {
         userId,
+        deletedAt: null, // only active notes
     };
 
     if (search) {
@@ -91,6 +92,7 @@ export const updateNote = async (userId: number, noteId: number, data: { title: 
         where: {
             id: noteId,
             userId: userId,
+            deletedAt: null, // only active notes can be updated
         },
     });
 
@@ -114,6 +116,7 @@ export const getNoteById = async (userId: number, noteId: number) => {
         where: {
             id: noteId,
             userId,
+            deletedAt: null, // only active notes
         }
     });
 
@@ -122,4 +125,29 @@ export const getNoteById = async (userId: number, noteId: number) => {
     }
 
     return note;
+}
+
+export const softDeleteNote = async (userId: number, noteId: number) => {
+    const note = await prisma.note.findFirst({
+        where: {
+            id: noteId,
+            userId,
+            deletedAt: null, // only active notes
+        }
+    });
+
+    if (!note) {
+        throw new NotFoundError("Note not found");
+    }
+
+    const deletedNote = await prisma.note.update({
+        where: {
+            id: noteId,
+        },
+        data: {
+            deletedAt: new Date(),
+        }
+    });
+
+    return deletedNote;
 }
