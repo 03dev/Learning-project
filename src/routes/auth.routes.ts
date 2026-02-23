@@ -11,10 +11,10 @@ const JWT_SECRET = process.env.JWT_SECRET as string;
 
 
 // Signup route
-router.post('/signup',validateRequest(credentialsSchema), asyncHandler(signUpController));
+router.post('/signup',validateRequest({body: credentialsSchema}), asyncHandler(signUpController));
 
 // login route
-router .post('/login', validateRequest(credentialsSchema), asyncHandler(loginController));
+router .post('/login', validateRequest({body: credentialsSchema}), asyncHandler(loginController));
 
 // protected route example
 router.get('/me', authMiddleware, asyncHandler(meController));

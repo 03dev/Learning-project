@@ -1,12 +1,18 @@
 import { Request } from 'express';
 
-export interface AuthRequest extends Request {
+export interface AppRequest extends Request {
   user?: {
     id: number;
   };
+
+  validated?: {
+    body?: unknown;
+    query?: unknown;
+    params?: unknown;
+  };
 }
 
-export interface AuthenticatedRequest extends Request {
+export interface AuthenticatedRequest extends AppRequest {
   user: {
     id: number;
   };

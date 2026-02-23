@@ -1,12 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { AuthRequest } from '../types/request.types';
+import { AppRequest } from '../types/request.types';
 import { th } from 'zod/v4/locales';
 import { UnauthorizedError } from '../errors/UnauthorizedError';
 
 const JWT_SECRET = process.env.JWT_SECRET as string;
 
-export const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction) => {
+export const authMiddleware = (req: AppRequest, res: Response, next: NextFunction) => {
     const token = req.cookies?.token;
 
     if(!token) {

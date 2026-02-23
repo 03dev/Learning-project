@@ -4,9 +4,9 @@ import { BadRequestError } from "../errors/BadRequestError";
 import { signUp } from "../services/auth.service";
 import { login } from "../services/auth.service";
 import { Request, Response } from "express";
-import { AuthRequest, AuthenticatedRequest } from "../types/request.types";
+import { AppRequest, AuthenticatedRequest } from "../types/request.types";
 
-export const signUpController = async (req: AuthRequest, res: Response) => {
+export const signUpController = async (req: AppRequest, res: Response) => {
     await signUp(req.body);
 
     return res.status(201).json({

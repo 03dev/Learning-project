@@ -16,7 +16,6 @@ export const createNote = async (userId: number, data: { title: string; content:
 }
 
 export const getUserNotes = async (userId: number, queryData: NoteQueryParams) => {
-
     let { page, limit, search, sortBy, sortOrder } = queryData;
 
     let orderBy: Prisma.NoteOrderByWithRelationInput = {
@@ -150,4 +149,31 @@ export const softDeleteNote = async (userId: number, noteId: number) => {
     });
 
     return deletedNote;
+}
+
+export const restoreNote = async (userId: number, noteId: number) => {
+    const note = await prisma.note.findFirst({
+        where: {
+            id: noteId,
+            userId,
+            deletedAt: {
+                not: null, // only soft-deleted notes can be restored
+            },
+        }
+    });
+
+    if (!note) {
+        throw new NotFoundError("Note not found or not deleted"); 
+    }
+   
+    const restoredNote = await prisma.note.update({
+        where: {
+            id: note.id,
+        },
+        data: {
+            deletedAt: null,
+        }
+    });
+
+    return restoredNote;
 }

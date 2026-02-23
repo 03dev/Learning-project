@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import { createNote, deleteNote, getNoteById, getUserNotes, softDeleteNote, updateNote } from "../services/note.service";
-import { noteQuerySchema } from "../validators/noteQuerySchema";
-import { AuthRequest, AuthenticatedRequest } from "../types/request.types";
+import { createNote, deleteNote, getNoteById, getUserNotes, restoreNote, softDeleteNote, updateNote } from "../services/note.service";
+import { NoteQueryParams, noteQuerySchema } from "../validators/noteQuerySchema";
+import { AppRequest, AuthenticatedRequest } from "../types/request.types";
 import { CreateNoteInput, UpdateNoteInput } from "../validators/note.schema";
 import { BadRequestError } from "../errors/BadRequestError";
 
@@ -21,24 +21,14 @@ export const createNoteController = async (req: AuthenticatedRequest & Request<{
 
 export const getUserNotesController = async (req: AuthenticatedRequest, res: Response) => {
   const userId = req.user.id;
-  if (!userId) {
-    throw new BadRequestError("User not authenticated");
-  }
-  const parsedQuery = noteQuerySchema.safeParse(req.query);
+  const query = req.validated?.query as NoteQueryParams;
 
-  if (!parsedQuery.success) {
-    throw new BadRequestError("Validation error: " + JSON.stringify(parsedQuery.error.issues));
-  }
-
-  const result = await getUserNotes(userId, parsedQuery.data);
+  const result = await getUserNotes(userId, query);
   return res.status(200).json(result);
 };
 
 export const deleteNoteController = async (req: AuthenticatedRequest, res: Response) => {
   const userId = req.user.id;
-  if (!userId) {
-    throw new BadRequestError("User not authenticated");
-  }
   const noteId = Number(req.params.id);
 
   if (!Number.isInteger(noteId) || noteId <= 0) {
@@ -101,5 +91,22 @@ export const softDeleteNoteController = async (req: AuthenticatedRequest & Reque
 
   return res.status(200).json({
     message: "Note deleted successfully",
+  });
+};
+
+export const restoreNoteController = async (req: AuthenticatedRequest & Request<{ id: string }>, res: Response) => {
+  const userId = req.user.id;
+
+  const noteId = Number.parseInt(req.params.id, 10);
+
+  if (!Number.isInteger(noteId) || noteId <= 0) {
+    throw new BadRequestError("Invalid note ID");
+  }
+
+  const note = await restoreNote(userId, noteId);
+
+  return res.status(200).json({
+    data: note,
+    message: "Note restored successfully",
   });
 };
