@@ -1,9 +1,9 @@
 import { Request } from "express";
 
-export interface ValidatedRequest extends Request {
-  validated?: {
-    body?: any;
-    query?: any;
-    params?: any;
+export interface ValidatedRequest<p = {}, q = {}, b = {}> extends Request {
+  validated: {
+    body: b;
+    query: q;
+    params: p;
   };
 }

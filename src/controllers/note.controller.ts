@@ -4,6 +4,8 @@ import { NoteQueryParams, noteQuerySchema } from "../validators/noteQuerySchema"
 import { AppRequest, AuthenticatedRequest } from "../types/request.types";
 import { CreateNoteInput, UpdateNoteInput } from "../validators/note.schema";
 import { BadRequestError } from "../errors/BadRequestError";
+import { NoteIdParam } from "../validators/noteIdParamSchema";
+import { ValidatedRequest } from "../types/validate-request.type";
 
 export const createNoteController = async (req: AuthenticatedRequest & Request<{ id: string }, {}, CreateNoteInput>, res: Response) => {
   const userId = req.user.id;
@@ -78,19 +80,14 @@ export const getNoteByIdController = async (req: AuthenticatedRequest & Request<
   });
 };
 
-export const softDeleteNoteController = async (req: AuthenticatedRequest & Request<{ id: string }>, res: Response) => {
+export const softDeleteNoteController = async (req: AuthenticatedRequest & ValidatedRequest<NoteIdParam>, res: Response) => {
   const userId = req.user.id;
+  const { id } = req.validated.params;
 
-  const noteId = Number.parseInt(req.params.id, 10);
-
-  if (!Number.isInteger(noteId) || noteId <= 0) {
-    throw new BadRequestError("Invalid note ID");
-  }
-
-  await softDeleteNote(userId, noteId);
+  await softDeleteNote(userId, id);
 
   return res.status(200).json({
-    message: "Note deleted successfully",
+    message: "Note soft deleted successfully",
   });
 };
 

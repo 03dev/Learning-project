@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import prisma from "../db/prisma";
 import { NoteQueryParams } from "../validators/noteQuerySchema";
 import { NotFoundError } from "../errors/NotFoundError";
+import { findActiveNotesByIdAndUserId, softDeleteById } from "../Repositories/note.repositry";
 
 export const createNote = async (userId: number, data: { title: string; content: string }) => {
     const { title, content } = data;
@@ -127,28 +128,13 @@ export const getNoteById = async (userId: number, noteId: number) => {
 }
 
 export const softDeleteNote = async (userId: number, noteId: number) => {
-    const note = await prisma.note.findFirst({
-        where: {
-            id: noteId,
-            userId,
-            deletedAt: null, // only active notes
-        }
-    });
+    const note = await findActiveNotesByIdAndUserId(userId, noteId);
 
-    if (!note) {
+    if(!note) {
         throw new NotFoundError("Note not found");
     }
 
-    const deletedNote = await prisma.note.update({
-        where: {
-            id: noteId,
-        },
-        data: {
-            deletedAt: new Date(),
-        }
-    });
-
-    return deletedNote;
+    return softDeleteById(noteId);
 }
 
 export const restoreNote = async (userId: number, noteId: number) => {
