@@ -1,14 +1,14 @@
-import prisma from "../db/prisma";
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { BadRequestError } from "../errors/BadRequestError";
 import { UnauthorizedError } from "../errors/UnauthorizedError";
+import * as AuthRepository from "../repositories/auth.repository";
 
 const JWT_SECRET = process.env.JWT_SECRET as string;
 
 export const signUp = async (data: { email: string, password: string}) => {
     const { email, password} = data;
-    const existingUser = await prisma.user.findUnique({where: {email}});
+    const existingUser = await AuthRepository.findUserByEmail(email);
 
     if(existingUser) {
         throw new BadRequestError("User already exists");
@@ -17,17 +17,12 @@ export const signUp = async (data: { email: string, password: string}) => {
     // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
 
-    return prisma.user.create({
-        data: {
-            email,
-            passwordHash
-        }
-    });
+    return AuthRepository.createUser(email, passwordHash);
 };
 
 export const login = async (data: {email: string, password: string}) => {
     const { email, password } = data;
-    const user = await prisma.user.findUnique({where: { email }});
+    const user = await AuthRepository.findUserByEmail(email);
 
     if(!user) {
         throw new BadRequestError("Invalid email or password");

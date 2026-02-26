@@ -1,29 +1,23 @@
 import { Prisma } from "@prisma/client";
-import prisma from "../db/prisma";
 import { NoteQueryParams } from "../validators/noteQuerySchema";
 import { NotFoundError } from "../errors/NotFoundError";
-import { findActiveNotesByIdAndUserId, softDeleteById } from "../Repositories/note.repositry";
+import * as NoteRepository from "../repositories/note.repository";
+import { UpdateNoteInput } from "../validators/note.schema";
 
 export const createNote = async (userId: number, data: { title: string; content: string }) => {
     const { title, content } = data;
 
-    return prisma.note.create({
-        data: {
-            title,
-            content,
-            userId,
-        }
-    });
+    return NoteRepository.createNote(userId, title, content);
 }
 
 export const getUserNotes = async (userId: number, queryData: NoteQueryParams) => {
-    let { page, limit, search, sortBy, sortOrder } = queryData;
+    const { page, limit, search, sortBy, sortOrder } = queryData;
 
-    let orderBy: Prisma.NoteOrderByWithRelationInput = {
+    const orderBy: Prisma.NoteOrderByWithRelationInput = {
         [sortBy]: sortOrder,
     };
 
-    let whereCondition: Prisma.NoteWhereInput = {
+    const whereCondition: Prisma.NoteWhereInput = {
         userId,
         deletedAt: null, // only active notes
     };
@@ -46,15 +40,8 @@ export const getUserNotes = async (userId: number, queryData: NoteQueryParams) =
     const skippedItems = (page - 1) * limit;
 
     const [totalNotes, notes] = await Promise.all([
-        prisma.note.count({
-            where: whereCondition,
-        }),
-        prisma.note.findMany({
-            where: whereCondition,
-            skip: skippedItems,
-            take: limit,
-            orderBy,
-        })
+        NoteRepository.getTotalNotesCount(whereCondition),
+        NoteRepository.getNotes(userId, whereCondition, skippedItems, limit, orderBy)
     ]);
 
     const totalPages = Math.ceil(totalNotes / limit);
@@ -71,12 +58,7 @@ export const getUserNotes = async (userId: number, queryData: NoteQueryParams) =
 }
 
 export const deleteNote = async (userId: number, noteId: number) => {
-    const result = await prisma.note.deleteMany({
-        where: {
-            id: noteId,
-            userId,
-        },
-    });
+    const result = await NoteRepository.hardDeleteNoteById(noteId, userId);
 
     if (result.count === 0) {
         throw new NotFoundError("Note not found or unauthorized");
@@ -85,42 +67,20 @@ export const deleteNote = async (userId: number, noteId: number) => {
     return result;
 }
 
-export const updateNote = async (userId: number, noteId: number, data: { title: string; content: string }) => {
-    const { title, content } = data;
-
-    const note = await prisma.note.findFirst({
-        where: {
-            id: noteId,
-            userId: userId,
-            deletedAt: null, // only active notes can be updated
-        },
-    });
+export const updateNote = async (userId: number, noteId: number, data: UpdateNoteInput) => {
+    const note = await NoteRepository.findActiveNoteByIdAndUserId(userId, noteId);
 
     if (!note) {
         throw new NotFoundError("Note not found or unauthorized");
     }
 
-    return prisma.note.update({
-        where: {
-            id: noteId,
-        },
-        data: {
-            title,
-            content,
-        },
-    });
+    return NoteRepository.updateNoteById(noteId, data);
 }
 
 export const getNoteById = async (userId: number, noteId: number) => {
-    const note = await prisma.note.findFirst({
-        where: {
-            id: noteId,
-            userId,
-            deletedAt: null, // only active notes
-        }
-    });
+    const note = await NoteRepository.findActiveNoteByIdAndUserId(userId, noteId);
 
-    if(!note) {
+    if (!note) {
         throw new NotFoundError("Note not found or unauthorized");
     }
 
@@ -128,38 +88,21 @@ export const getNoteById = async (userId: number, noteId: number) => {
 }
 
 export const softDeleteNote = async (userId: number, noteId: number) => {
-    const note = await findActiveNotesByIdAndUserId(userId, noteId);
+    const note = await NoteRepository.findActiveNoteByIdAndUserId(userId, noteId);
 
-    if(!note) {
+    if (!note) {
         throw new NotFoundError("Note not found");
     }
 
-    return softDeleteById(noteId);
+    return NoteRepository.softDeleteNoteById(noteId);
 }
 
 export const restoreNote = async (userId: number, noteId: number) => {
-    const note = await prisma.note.findFirst({
-        where: {
-            id: noteId,
-            userId,
-            deletedAt: {
-                not: null, // only soft-deleted notes can be restored
-            },
-        }
-    });
+    const note = await NoteRepository.findSoftDeletedNoteByIdAndUserId(userId, noteId);
 
     if (!note) {
-        throw new NotFoundError("Note not found or not deleted"); 
+        throw new NotFoundError("Note not found or not deleted");
     }
-   
-    const restoredNote = await prisma.note.update({
-        where: {
-            id: note.id,
-        },
-        data: {
-            deletedAt: null,
-        }
-    });
 
-    return restoredNote;
+    return NoteRepository.restoreSoftDeletedNote(noteId);
 }
