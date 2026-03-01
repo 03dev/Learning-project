@@ -18,6 +18,7 @@ model User {
   email        String @unique
   passwordHash String
   notes        Note[]
+  refreshToken RefreshToken[]
 }
 
 model Note {
@@ -28,4 +29,13 @@ model Note {
   user         User     @relation(fields: [userId], references: [id])
   createdAt    DateTime @default(now())
   deletedAt    DateTime?
+}
+
+model RefreshToken {
+  id        Int    @id @default(autoincrement())
+  userId    Int
+  token     String @unique
+  user      User   @relation(fields: [userId], references: [id])
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }

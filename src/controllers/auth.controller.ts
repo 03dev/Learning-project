@@ -1,10 +1,7 @@
-
-import { credentialsSchema } from "../validators/auth.schema"
-import { BadRequestError } from "../errors/BadRequestError";
-import { signUp } from "../services/auth.service";
-import { login } from "../services/auth.service";
+import { signUp, login, refreshUserToken } from "../services/auth.service";
 import { Request, Response } from "express";
 import { AppRequest, AuthenticatedRequest } from "../types/request.types";
+import { UnauthorizedError } from "../errors/UnauthorizedError";
 
 export const signUpController = async (req: AppRequest, res: Response) => {
     await signUp(req.body);
@@ -15,16 +12,43 @@ export const signUpController = async (req: AppRequest, res: Response) => {
 };
 
 export const loginController = async (req: Request, res: Response) => {
-    const token = await login(req.body);
+    const { accessToken, refreshToken } = await login(req.body);
     
-    res.cookie('token', token, {
+    res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         secure: false, // set to true in production
         sameSite: 'lax',
+        path: '/auth/refresh', // VERY IMPORTANT
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
 
     return res.status(200).json({
-        message: "Login successful"
+        message: "Login successful",
+        accessToken
+    });
+}
+
+export const refreshTokenController = async (req: Request, res: Response) =>{
+    const token = req.cookies.refreshToken;
+
+    if(!token) {
+        throw new UnauthorizedError("No refresh token provided");
+    }
+
+    const { newAccessToken, newRefreshToken } = await refreshUserToken(token);
+
+    res.clearCookie('refreshToken', { path: '/auth/refresh' });
+
+    res.cookie('refreshToken', newRefreshToken, {
+        httpOnly: true,
+        secure: false, // set to true in production
+        sameSite: 'lax',
+        path: '/auth/refresh',
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+
+    return res.status(200).json({
+        newAccessToken,
     });
 }
 

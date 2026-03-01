@@ -1,20 +1,23 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { env } from '../config/env';
 import { AppRequest } from '../types/request.types';
 import { th } from 'zod/v4/locales';
 import { UnauthorizedError } from '../errors/UnauthorizedError';
 
-const JWT_SECRET = process.env.JWT_SECRET as string;
+const JWT_SECRET = env.ACCESSTOKEN;
 
 export const authMiddleware = (req: AppRequest, res: Response, next: NextFunction) => {
-    const token = req.cookies?.token;
+    const authHeader = req.headers.authorization;
 
-    if(!token) {
-        return next(new UnauthorizedError("Unauthorized: No token provided"));
+    if(!authHeader || !authHeader.startsWith('Bearer ')) {
+        return next(new UnauthorizedError("Unauthorized: No access token provided"));
     }
 
+    const accessToken = authHeader.split(' ')[1];
+
     try {
-        const decode = jwt.verify(token, JWT_SECRET) as { id: number };
+        const decode = jwt.verify(accessToken, JWT_SECRET) as { id: number };
 
         // attach user info to request
         req.user = { id: decode.id };

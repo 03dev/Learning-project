@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { authMiddleware } from '../middleware/auth.middleware';
-import { loginController, meController, signUpController } from '../controllers/auth.controller';
+import { loginController, meController, signUpController, refreshTokenController } from '../controllers/auth.controller';
 import { asyncHandler } from '../utils/asyncHandler';
 import { validateRequest } from '../middleware/validate.middleware';
 import { credentialsSchema } from '../validators/auth.schema';
@@ -18,5 +18,7 @@ router .post('/login', validateRequest({body: credentialsSchema}), asyncHandler(
 
 // protected route example
 router.get('/me', authMiddleware, asyncHandler(meController));
+
+router.post('/refresh', asyncHandler(refreshTokenController));
 
 export default router;
