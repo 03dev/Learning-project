@@ -17,10 +17,10 @@ export const authMiddleware = (req: AppRequest, res: Response, next: NextFunctio
     const accessToken = authHeader.split(' ')[1];
 
     try {
-        const decode = jwt.verify(accessToken, JWT_SECRET) as { id: number };
+        const decode = jwt.verify(accessToken, JWT_SECRET) as { id: number, role: string };
 
         // attach user info to request
-        req.user = { id: decode.id };
+        req.user = { id: decode.id, role: decode.role};
 
         next();
     } catch (error) {

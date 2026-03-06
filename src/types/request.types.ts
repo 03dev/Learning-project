@@ -3,6 +3,7 @@ import { Request } from 'express';
 export interface AppRequest extends Request {
   user?: {
     id: number;
+    role: string;
   };
 
   validated?: {
@@ -15,5 +16,6 @@ export interface AppRequest extends Request {
 export interface AuthenticatedRequest extends AppRequest {
   user: {
     id: number;
+    role: string;
   };
 }
