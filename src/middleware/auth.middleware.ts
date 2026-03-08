@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
 import { AppRequest } from '../types/request.types';
-import { th } from 'zod/v4/locales';
+import { Role } from '../types/roles.types';
 import { UnauthorizedError } from '../errors/UnauthorizedError';
 
 const JWT_SECRET = env.ACCESSTOKEN;
@@ -17,15 +17,13 @@ export const authMiddleware = (req: AppRequest, res: Response, next: NextFunctio
     const accessToken = authHeader.split(' ')[1];
 
     try {
-        const decode = jwt.verify(accessToken, JWT_SECRET) as { id: number, role: string };
+        const decode = jwt.verify(accessToken, JWT_SECRET) as { id: number, role: Role };
 
         // attach user info to request
         req.user = { id: decode.id, role: decode.role};
 
         next();
     } catch (error) {
-        res.status(401).json({
-            message: "Unauthorized: Invalid token"
-        })
+        next(new UnauthorizedError("Unauthorized: Invalid token"));
     }
 }

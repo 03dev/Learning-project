@@ -38,7 +38,7 @@ export const login = async (data: { email: string, password: string }) => {
 
     const dbToken = await AuthRepository.createRefreshToken(user.id);
 
-    const accessToken = jwt.sign({ id: user.id }, ACCESS_SECRET, { expiresIn: '1h' });
+    const accessToken = jwt.sign({ id: user.id, role: user.role }, ACCESS_SECRET, { expiresIn: '1h' });
     const refreshToken = jwt.sign({ id: user.id, tokenId: dbToken.id}, REFRESH_SECRET, { expiresIn: '7d' });
 
     const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
